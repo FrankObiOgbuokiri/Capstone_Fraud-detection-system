@@ -6,101 +6,27 @@
 ### `src/data_prep.py`
 
 ```python
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-import joblib
 
-def load_and_inspect(filepath):
-    df = pd.read_csv(filepath)
-    print(f"Shape: {df.shape}")
-    print(f"Class Distribution:\n{df['Class'].value_counts(normalize=True)}")
-    return df
-
-def scale_features(df, fit=True, scaler_path="scaler.pkl"):
-    # Assumes target column is 'Class'
-    features = df.drop(columns=['Class'], errors='ignore')
-    
-    if fit:
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(features[['Time', 'Amount']])
-        joblib.dump(scaler, scaler_path)
-    else:
-        scaler = joblib.load(scaler_path)
-        scaled_features = scaler.transform(features[['Time', 'Amount']])
-        
-    df_scaled = df.copy()
-    df_scaled[['Time', 'Amount']] = scaled_features
-    return df_scaled
-
-def split_data(df, target_col='Class', test_size=0.2):
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
-    return train_test_split(X, y, test_size=test_size, stratify=y, random_state=42)
 
 ```
 
 ### `src/sampling.py`
 
 ```python
-from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
 
-def apply_smote(X_train, y_train):
-    smote = SMOTE(random_state=42)
-    return smote.fit_resample(X_train, y_train)
-
-def apply_undersampling(X_train, y_train):
-    rus = RandomUnderSampler(random_state=42)
-    return rus.fit_resample(X_train, y_train)
 
 ```
 
 ### `src/train.py`
 
 ```python
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
-import joblib
 
-def train_logistic_regression(X_train, y_train):
-    model = LogisticRegression(class_weight='balanced', max_iter=1000)
-    model.fit(X_train, y_train)
-    return model
-
-def train_xgboost(X_train, y_train):
-    # scale_pos_weight helps with imbalance
-    ratio = float(y_train.value_counts()[0]) / y_train.value_counts()[1]
-    model = XGBClassifier(scale_pos_weight=ratio, random_state=42)
-    model.fit(X_train, y_train)
-    return model
-
-def save_model(model, filepath="fraud_model.pkl"):
-    joblib.dump(model, filepath)
 
 ```
 
 ### `src/evaluate.py`
 
 ```python
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, average_precision_score
-
-def evaluate_model(model, X_test, y_test):
-    y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1]
-    
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-    
-    roc_auc = roc_auc_score(y_test, y_proba)
-    pr_auc = average_precision_score(y_test, y_proba)
-    
-    print(f"ROC-AUC: {roc_auc:.4f}")
-    print(f"PR-AUC (Important for Imbalance): {pr_auc:.4f}")
-    return {"roc_auc": roc_auc, "pr_auc": pr_auc}
 
 ```
 
@@ -113,110 +39,13 @@ Place these files in the `backend/` folder alongside the serialized `fraud_model
 ### `backend/explain.py`
 
 ```python
-import shap
-import pandas as pd
-from openai import OpenAI
-import os
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-def get_shap_explanation(model, input_df):
-    """Calculates SHAP values for the given input."""
-    # Note: Use TreeExplainer for XGBoost/Random Forest, LinearExplainer for Logistic Regression
-    explainer = shap.Explainer(model)
-    shap_values = explainer(input_df)
-    
-    # Extract top 3 features for this specific prediction
-    feature_names = input_df.columns
-    shap_df = pd.DataFrame({
-        'feature': feature_names,
-        'importance': abs(shap_values.values[0])
-    }).sort_values(by='importance', ascending=False)
-    
-    return shap_df['feature'].head(3).tolist()
-
-def generate_llm_explanation(top_features, probability):
-    """Converts SHAP features into a plain-English explanation via LLM."""
-    prompt = f"""
-    A fraud detection model flagged a transaction with a {(probability * 100):.1f}% probability of being fraudulent.
-    The top features contributing to this decision were: {', '.join(top_features)}.
-    
-    Write exactly one short, plain-English sentence explaining this to a non-technical fraud analyst.
-    Do not mention SHAP or the math. Keep it actionable.
-    """
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=50,
-            temperature=0.3
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return "Explanation unavailable at this time due to LLM timeout."
 
 ```
 
 ### `backend/main.py`
 
 ```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import joblib
-import pandas as pd
-from explain import get_shap_explanation, generate_llm_explanation
-
-app = FastAPI(title="Fraud Detection API")
-
-# Load artifacts on startup
-try:
-    model = joblib.load("fraud_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-except Exception as e:
-    raise RuntimeError(f"Could not load model or scaler: {e}")
-
-# Assuming V1-V28 + Time + Amount
-class Transaction(BaseModel):
-    Time: float
-    Amount: float
-    V1: float
-    V2: float
-    V3: float
-    V4: float
-    # ... Include all 28 V-features here. Truncated for brevity.
-
-@app.post("/predict")
-def predict_fraud(transaction: Transaction):
-    try:
-        # Convert to DataFrame
-        data_dict = transaction.model_dump()
-        df = pd.DataFrame([data_dict])
-        
-        # Preprocess Time and Amount
-        df[['Time', 'Amount']] = scaler.transform(df[['Time', 'Amount']])
-        
-        # Predict
-        probability = float(model.predict_proba(df)[0, 1])
-        prediction = int(model.predict(df)[0])
-        
-        # Explain
-        top_features = []
-        explanation = "Legitimate transaction."
-        
-        if prediction == 1:
-            top_features = get_shap_explanation(model, df)
-            explanation = generate_llm_explanation(top_features, probability)
-
-        return {
-            "prediction": prediction,
-            "probability": round(probability, 4),
-            "message": "Fraudulent transaction detected" if prediction == 1 else "Transaction approved",
-            "top_features": top_features,
-            "explanation": explanation
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 ```
 
@@ -227,76 +56,6 @@ def predict_fraud(transaction: Transaction):
 ### `frontend/app.py`
 
 ```python
-import streamlit as st
-import requests
-import pandas as pd
-
-API_URL = "http://localhost:8007/predict"
-
-st.set_page_config(page_title="Fraud Detection Dashboard", layout="wide")
-st.title("Credit Card Fraud Detection")
-
-tab1, tab2 = st.tabs(["Manual Entry", "CSV Batch Upload"])
-
-with tab1:
-    st.header("Manual Transaction Entry")
-    with st.form("manual_entry"):
-        col1, col2 = st.columns(2)
-        time_val = col1.number_input("Time", value=0.0)
-        amount_val = col2.number_input("Amount", value=150.00)
-        
-        st.write("Anonymized Features (V1 - V4 for demo)")
-        v1 = col1.number_input("V1", value=0.0)
-        v2 = col2.number_input("V2", value=0.0)
-        v3 = col1.number_input("V3", value=0.0)
-        v4 = col2.number_input("V4", value=0.0)
-        # Add remaining V-features in reality
-        
-        submitted = st.form_submit_button("Analyze Transaction")
-        
-        if submitted:
-            payload = {"Time": time_val, "Amount": amount_val, "V1": v1, "V2": v2, "V3": v3, "V4": v4}
-            # Fill remaining features with 0.0 for this demo snippet to match Pydantic schema
-            
-            with st.spinner("Analyzing..."):
-                resp = requests.post(API_URL, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if data["prediction"] == 1:
-                        st.error(f"🚨 FRAUD DETECTED (Probability: {data['probability']*100:.2f}%)")
-                        st.warning(f"**Explanation:** {data['explanation']}")
-                    else:
-                        st.success(f"✅ Transaction Approved (Probability of fraud: {data['probability']*100:.2f}%)")
-                else:
-                    st.error("API Error")
-
-with tab2:
-    st.header("Batch Upload")
-    uploaded_file = st.file_uploader("Upload CSV of transactions", type=["csv"])
-    
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        results = []
-        
-        progress_bar = st.progress(0)
-        for i, row in df.iterrows():
-            payload = row.to_dict()
-            resp = requests.post(API_URL, json=payload)
-            if resp.status_code == 200:
-                results.append(resp.json())
-            progress_bar.progress((i + 1) / len(df))
-            
-        st.write("### Flagged Transactions")
-        flagged = [r for r in results if r["prediction"] == 1]
-        
-        if not flagged:
-            st.success("No fraud detected in this batch.")
-        else:
-            st.error(f"{len(flagged)} suspicious transactions found.")
-            for f in flagged:
-                with st.expander(f"Fraud Probability: {f['probability']*100:.2f}%"):
-                    st.write(f"**Top Features:** {', '.join(f['top_features'])}")
-                    st.write(f"**Analyst Summary:** {f['explanation']}")
 
 ```
 
@@ -307,21 +66,6 @@ with tab2:
 ### `requirements.txt`
 
 ```text
-pandas
-numpy
-scikit-learn
-imbalanced-learn
-xgboost
-fastapi
-uvicorn
-pydantic
-streamlit
-requests
-shap
-openai
-matplotlib
-seaborn
-joblib
 
 ```
 
