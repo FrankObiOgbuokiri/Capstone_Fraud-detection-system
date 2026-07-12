@@ -47,9 +47,10 @@ fraud_detection_system/
 │   └── evaluate.py
 ├── notebooks/                    # INDIVIDUAL: Your own workspace
 │   ├── .gitkeep
-│   ├── fraud_training_alice.ipynb
-│   ├── fraud_training_bob.ipynb
-│   └── fraud_training_charlie.ipynb
+│   ├── fraud_training_obi.ipynb
+│   
+
+
 ├── backend/                      # SHARED APPLICATION LAYER
 │   ├── main.py
 │   ├── explain.py
