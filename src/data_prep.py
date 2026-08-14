@@ -3,9 +3,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-
+#Loads a CSV dataset from a given file path.
 def load_data(file_path):
-    """Loads a CSV dataset from a given file path."""
+    
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
     
@@ -15,7 +15,6 @@ def load_data(file_path):
     df = pd.read_csv(file_path)
     print(f"CSV data loaded successfully with shape: {df.shape}")
     return df
-
 
 def inspect_data(df):
     """Prints basic summary information about the dataset."""
@@ -30,7 +29,6 @@ def inspect_data(df):
     
     print("\n--- SUMMARY STATISTICS ---")
     print(df.describe())
-
 
 def feature_engineering(df):
     """
@@ -47,7 +45,6 @@ def feature_engineering(df):
         
     return df_engineered
 
-
 def split_data(df, target_column='Class', test_size=0.2, random_state=42):
     """Splits the dataset into features (X) and target (y), then into train and test sets."""
     X = df.drop(columns=[target_column])
@@ -59,7 +56,6 @@ def split_data(df, target_column='Class', test_size=0.2, random_state=42):
     
     print(f"Train set: {X_train.shape} | Test set: {X_test.shape}")
     return X_train, X_test, y_train, y_test
-
 
 def scale_data(X_train, X_test, columns_to_scale):
     """Scales specified numerical columns using StandardScaler."""
@@ -74,3 +70,4 @@ def scale_data(X_train, X_test, columns_to_scale):
     
     print(f"Scaled columns: {columns_to_scale}")
     return X_train_scaled, X_test_scaled, scaler
+
