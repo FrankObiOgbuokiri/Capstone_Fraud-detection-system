@@ -15,7 +15,8 @@ This repository contains the **Fraud Detection** project developed under the **3
 *   **Libraries:** 
     *   *Data Manipulation:* Pandas, NumPy
     *   *Data Visualization:* Matplotlib, Seaborn
-    *   *Machine Learning:* Scikit-Learn, XGBoost/LightGBM (if applicable)
+    *   *Machine Learning:* Scikit-Learn, XGBoost
+    
 *   **Environment:** Python/Jupyter Notebook 
 
 ## Dataset Description
@@ -43,8 +44,6 @@ fraud_detection_system/
 │   ├── .gitkeep
 │   ├── fraud_training_obi.ipynb
 │   
-
-
 ├── backend/                      # SHARED APPLICATION LAYER
 │   ├── main.py
 │   ├── explain.py
@@ -54,5 +53,4 @@ fraud_detection_system/
 │   └── app.py
 └── docs/                         # INDIVIDUAL: Technical reports
     ├── report_obi.md
-    ├── report_sylvia.md
-    └── report_kalu.md
+    
