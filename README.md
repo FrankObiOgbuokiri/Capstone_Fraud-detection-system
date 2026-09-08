@@ -29,28 +29,27 @@ The dataset used in this project models typical financial transaction behaviors.
 
 
 ## Project Structure
-```text
-fraud_detection_system/
+Real time fraud_detection_system/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
-├── src/                          # SHARED: Built via collaborative PRs
+├── src/                          
 │   ├── __init__.py
 │   ├── data_prep.py
 │   ├── sampling.py
 │   ├── train.py
 │   └── evaluate.py
-├── notebooks/                    # INDIVIDUAL: Your own workspace
+├── notebooks/                   
 │   ├── .gitkeep
 │   ├── fraud_training_obi.ipynb
-│   
-├── backend/                      # SHARED APPLICATION LAYER
+│   ├── preprocessing.ipynb   
+├── backend/                     
 │   ├── main.py
 │   ├── explain.py
-│   ├── fraud_model.pkl           # Saved production model
-│   └── scaler.pkl                # Saved production scaler
-├── frontend/                     # SHARED FRONTEND LAYER
+│   ├── fraud_model.pkl           
+│   └── scaler.pkl               
+├── frontend/                     
 │   └── app.py
-└── docs/                         # INDIVIDUAL: Technical reports
-    ├── report_obi.md
-    
+└── docs/                         
+│    ├── report_obi.docx
+│    ├── Executive_Sumary.md
