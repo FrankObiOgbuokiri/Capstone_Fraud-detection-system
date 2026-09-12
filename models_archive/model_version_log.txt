@@ -1,0 +1,3 @@
+20260826_033356 | fraud_model | XGBoost class-weighted, tuned, CV PR-AUC=0.8557, test PR-AUC=see report
+20260902_123201 | fraud_model | XGBoost class-weighted, tuned, CV PR-AUC=0.8557, test PR-AUC=see report
+20260904_201246 | fraud_model | XGBoost class-weighted, tuned, CV PR-AUC=0.8557, test PR-AUC=see report

@@ -1,7 +1,9 @@
+catboost==1.2.10
 fastapi==0.139.0
 groq==1.6.0
 imbalanced-learn==0.14.2
 joblib==1.5.3
+lightgbm==4.7.0
 matplotlib==3.11.0
 matplotlib-inline==0.2.2
 numpy==2.4.6
