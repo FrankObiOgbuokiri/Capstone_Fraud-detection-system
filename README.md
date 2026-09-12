@@ -2,11 +2,11 @@
 A full-stack machine learning system for detecting fraudulent credit card transactions in real time — a tuned, cross-validated XGBoost classifier served through a FastAPI backend and a Streamlit dashboard, with SHAP + LLM-generated explanations for every flagged transaction.
 Full methodology, model comparison, and results are documented in docs/report_obioma.docx and notebooks/.
 
-# Overview
+## Overview
 Credit card fraud is a classic extreme-imbalance classification problem — in the dataset this project is built on, fraudulent transactions make up only 0.17% of all records (492 out of 284,807). A naive model that predicts "legitimate" every time would score 99.8% accuracy while catching zero fraud, so this project is built around PR-AUC as the primary evaluation metric, and around class-weighting, resampling comparison, cross-validation, and threshold analysis as the core methodology, not just training a model and calling it done.
 The end result is a working system, not just a notebook: a trained model served through a real API, a dashboard non-technical users can interact with, and an explainability layer that makes the model's decisions auditable rather than opaque.
 
-# Features
+## Features
 
 - Tuned, cross-validated XGBoost classifier — hyperparameters selected via `RandomizedSearchCV` with 5-fold stratified cross-validation, optimizing for PR-AUC.
 - Evidence-based threshold selection — the classification threshold was swept and analyzed rather than left at an unexamined default; see Model Performance for the finding.
@@ -17,7 +17,7 @@ The end result is a working system, not just a notebook: a trained model served 
 - Streamlit dashboard with two modes: manual single-transaction entry, and CSV batch upload with per-row results, fraud highlighting, and expandable explanation panels.
 - Comprehensive model comparison — 5 models (Logistic Regression, Random Forest, XGBoost, CatBoost, LightGBM) evaluated across 3 imbalance-handling strategies.ategies (SMOTE, Random Under-Sampling, class-weighting) before final model selection.
 
-# Architecture
+## Architecture
 
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
@@ -33,7 +33,7 @@ The end result is a working system, not just a notebook: a trained model served 
 
 The model and scaler are trained and exported in notebooks/, then loaded by the FastAPI backend at startup. The backend is the single source of truth for predictions — the Streamlit frontend never touches the model directly, it only calls the API.
 
-# Project Structure
+## Project Structure
 
 ```
 Capstone_Fraud-detection-system/
@@ -63,7 +63,7 @@ Capstone_Fraud-detection-system/
 └── README.md
 ```
 
-# Setup
+## Setup
 python -m venv venv
 venv\Scripts\activate          # Windows (or: source venv/bin/activate)
 pip install -r requirements.txt
@@ -72,7 +72,7 @@ cd backend
 copy .env.example .env         # or: cp .env.example .env
 #### edit .env: GROQ_API_KEY=your_actual_key_here
 
-# Dataset
+## Dataset
 
 Uses the [Credit Card Fraud Detection dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 from Kaggle (284,807 transactions, 492 fraudulent). Included in this repo
@@ -82,7 +82,7 @@ at `data/creditcard.csv` via Git LFS — install
 rather than the actual dataset. For a quick check without pulling the full
 file, use `test_batch_sample.csv` in the dashboard's CSV Upload Mode.
 
-## Running the Project
+### Running the Project
 
 **Retrain the model:** run `notebooks/preprocessing.ipynb` then
 `notebooks/fraud_training_Obioma_Ogbuokiri.ipynb`.
@@ -102,17 +102,18 @@ streamlit run app.py
 ```
 
 The backend must be running before the frontend can return predictions.
-# Model Performance
+
+## Model Performance
 XGBoost (class-weighted, tuned): PR-AUC 0.8539 ± 0.0191 (5-fold CV), 0.8844 (test); precision/recall 0.89/0.84 on the fraud class. Full comparison against 4 other models and 3 resampling strategies is in preprocessing.ipynb.
 
-# API
+## API
 •	POST /predict — single transaction (Time, Amount, V1–V28)
 •	POST /predict_batch — {"transactions": [...]}, batched predictions
 Both return prediction, probability, top_features (SHAP), and explanation (LLM-generated).
 
-# Tech Stack
+## Tech Stack
 scikit-learn · XGBoost · CatBoost · LightGBM · SHAP · FastAPI · Streamlit · Groq API
 
-# Acknowledgements
+## Acknowledgements
 Developed as a capstone project, with structured review and mentorship shaping key fixes documented in docs/report_obioma.docx.
 
