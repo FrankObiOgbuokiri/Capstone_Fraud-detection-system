@@ -18,7 +18,8 @@ The end result is a working system, not just a notebook: a trained model served 
 - Comprehensive model comparison — 5 models (Logistic Regression, Random Forest, XGBoost, CatBoost, LightGBM) evaluated across 3 imbalance-handling strategies.ategies (SMOTE, Random Under-Sampling, class-weighting) before final model selection.
 
 # Architecture
-\`\`\`
+
+```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
 │  Streamlit UI    │  HTTP   │   FastAPI Backend │         │   Groq LLM API   │
 │  (frontend/)      │ ──────▶ │   (backend/)       │ ──────▶ │   (explanations) │
@@ -28,13 +29,13 @@ The end result is a working system, not just a notebook: a trained model served 
 └─────────────────┘         │  - SHAP layer     │ ──────▶ │  fraud_model.pkl │
                              │  - LLM layer      │         │  scaler.pkl      │
                              └──────────────────┘         └─────────────────┘
+```
 
-\`\`\`
 The model and scaler are trained and exported in notebooks/, then loaded by the FastAPI backend at startup. The backend is the single source of truth for predictions — the Streamlit frontend never touches the model directly, it only calls the API.
 
 # Project Structure
 
-\`\`\`
+```
 Capstone_Fraud-detection-system/
 ├── backend/
 │   ├── main.py              # FastAPI app: /predict, /predict_batch
@@ -60,7 +61,7 @@ Capstone_Fraud-detection-system/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-\`\`\`
+```
 
 # Setup
 python -m venv venv
@@ -72,19 +73,35 @@ copy .env.example .env         # or: cp .env.example .env
 #### edit .env: GROQ_API_KEY=your_actual_key_here
 
 # Dataset
-Uses the Credit Card Fraud Detection dataset from Kaggle (284,807 transactions, 492 fraudulent). Included in this repo at data/creditcard.csv via Git LFS — install Git LFS before cloning (git lfs install), or run git lfs pull after cloning if the file appears as a small pointer file rather than the actual dataset. For a quick check without pulling the full file, use test_batch_sample.csv in the dashboard's CSV Upload Mode.
-Running the Project
-Retrain the model: run notebooks/preprocessing.ipynb then notebooks/fraud_training_Obioma_Ogbuokiri.ipynb.
-Run the live system (two terminals):
-#### Terminal 1
+
+Uses the [Credit Card Fraud Detection dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+from Kaggle (284,807 transactions, 492 fraudulent). Included in this repo
+at `data/creditcard.csv` via Git LFS — install
+[Git LFS](https://git-lfs.com) before cloning (`git lfs install`), or run
+`git lfs pull` after cloning if the file appears as a small pointer file
+rather than the actual dataset. For a quick check without pulling the full
+file, use `test_batch_sample.csv` in the dashboard's CSV Upload Mode.
+
+## Running the Project
+
+**Retrain the model:** run `notebooks/preprocessing.ipynb` then
+`notebooks/fraud_training_Obioma_Ogbuokiri.ipynb`.
+
+**Run the live system** (two terminals):
+
+```bash
+# Terminal 1
 cd backend
 uvicorn main:app --reload
+```
 
-#### Terminal 2
+```bash
+# Terminal 2
 cd frontend
 streamlit run app.py
-The backend must be running before the frontend can return predictions.
+```
 
+The backend must be running before the frontend can return predictions.
 # Model Performance
 XGBoost (class-weighted, tuned): PR-AUC 0.8539 ± 0.0191 (5-fold CV), 0.8844 (test); precision/recall 0.89/0.84 on the fraud class. Full comparison against 4 other models and 3 resampling strategies is in preprocessing.ipynb.
 
